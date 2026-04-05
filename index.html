@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Divide &amp; Conquer Visualizer</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --panel: #ffffff;
+      --border: #d0dbe8;
+      --accent: #3b6ef5;
+      --accent2: #e05252;
+      --accent3: #27a85f;
+      --accent4: #e0a020;
+      --text: #1a2535;
+      --muted: #7a90aa;
+      --node-default: #dce8f8;
+      --node-active: #bcd5ff;
+      --node-done: #c8f0d8;
+      --header-bg: #1e2d45;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      padding: 12px 28px;
+      border-bottom: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--header-bg);
+      color: #fff;
+    }
+
+    .logo {
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: 0.01em;
+      color: #fff;
+    }
+
+    .logo span {
+      color: #6ea8ff;
+    }
+
+    /* ALGO TABS */
+    .algo-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 14px 28px 0;
+      background: var(--panel);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .algo-tab {
+      padding: 8px 22px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      color: var(--muted);
+      background: var(--bg);
+      border-radius: 6px 6px 0 0;
+      transition: all 0.18s;
+    }
+
+    .algo-tab.active {
+      color: var(--accent);
+      border-color: var(--border);
+      background: var(--panel);
+      border-bottom: 2px solid var(--panel);
+      margin-bottom: -2px;
+    }
+
+    .algo-tab:hover:not(.active) {
+      color: var(--text);
+      background: #e8eef6;
+    }
+
+    /* MAIN LAYOUT */
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 270px 1fr 210px;
+      gap: 0;
+    }
+
+    /* LEFT PANEL */
+    .left-panel {
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--panel);
+    }
+
+    .panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      width: 100%;
+      border-radius: 5px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    input.error {
+      border-color: var(--accent2);
+    }
+
+    .error-msg {
+      font-size: 0.68rem;
+      color: var(--accent2);
+      display: none;
+    }
+
+    .error-msg.show {
+      display: block;
+    }
+
+    .btn {
+      padding: 9px 16px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      transition: all 0.18s;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #2c59d8;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .btn-reveal {
+      background: #fff7e0;
+      border: 1px solid var(--accent4);
+      color: #a36a00;
+      font-weight: 600;
+    }
+
+    .btn-reveal:hover {
+      background: #ffedb5;
+    }
+
+    .btn-reveal:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* STEP CONTROLS */
+    .step-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .step-btn {
+      padding: 9px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.78rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      border-radius: 5px;
+      transition: all 0.18s;
+    }
+
+    .step-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #eef3ff;
+    }
+
+    .step-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .step-info {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .step-info span {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+      width: 0%;
+      border-radius: 2px;
+    }
+
+    .step-detail {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      font-size: 0.72rem;
+      line-height: 1.7;
+      min-height: 80px;
+      border-radius: 5px;
+    }
+
+    .step-detail .step-type {
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 0.68rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .step-detail .step-data {
+      color: var(--text);
+    }
+
+    .step-detail .step-data .hi {
+      color: var(--accent3);
+      font-weight: 600;
+    }
+
+    .step-detail .step-data .warn {
+      color: var(--accent4);
+      font-weight: 600;
+    }
+
+    .step-detail .step-data .err {
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    /* CANVAS AREA */
+    .canvas-area {
+      position: relative;
+      overflow: hidden;
+      background: #e8f0f8;
+      border-top: 1px solid var(--border);
+    }
+
+    #tree-svg {
+      width: 100%;
+      height: 100%;
+      min-height: 580px;
+    }
+
+    .canvas-label {
+      position: absolute;
+      top: 12px;
+      left: 16px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      text-transform: uppercase;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .canvas-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 14px;
+      font-size: 0.62rem;
+      color: var(--muted);
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .empty-state .big-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: rgba(59, 110, 245, 0.07);
+    }
+
+    .empty-state .small-text {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* RIGHT PANEL */
+    .right-panel {
+      border-left: 1px solid var(--border);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--panel);
+    }
+
+    .metric {
+      text-align: center;
+      padding: 12px 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 6px;
+    }
+
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+      transition: all 0.3s;
+    }
+
+    .metric-label {
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .complexity-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 6px;
+    }
+
+    .complexity-formula {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--accent4);
+      text-align: center;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .complexity-detail {
+      font-size: 0.67rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* LEGEND */
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* D3 Tree Node Styles */
+    .node circle {
+      stroke-width: 2;
+      transition: all 0.35s ease;
+    }
+
+    .node.waiting circle {
+      fill: #dce8f8;
+      stroke: #b0c8e8;
+    }
+
+    .node.active circle {
+      fill: #bcd5ff;
+      stroke: var(--accent);
+      filter: drop-shadow(0 0 6px rgba(59, 110, 245, 0.5));
+    }
+
+    .node.done circle {
+      fill: #c8f0d8;
+      stroke: var(--accent3);
+    }
+
+    .node.left-win circle {
+      fill: #c8f0d8;
+      stroke: var(--accent3);
+    }
+
+    .node.right-win circle {
+      fill: #fff3cc;
+      stroke: var(--accent4);
+    }
+
+    .node.cross-win circle {
+      fill: #fde0e0;
+      stroke: var(--accent2);
+    }
+
+    .node text {
+      font-family: 'JetBrains Mono', monospace;
+      fill: #1a2535;
+      font-size: 10px;
+      pointer-events: none;
+    }
+
+    .node .result-text {
+      fill: var(--accent3);
+      font-size: 9px;
+      font-weight: 600;
+    }
+
+    .node .label-text {
+      fill: var(--muted);
+      font-size: 9px;
+    }
+
+    .link {
+      fill: none;
+      stroke: #b0c8e8;
+      stroke-width: 1.5;
+    }
+
+    .link.active {
+      stroke: rgba(59, 110, 245, 0.5);
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        stroke-width: 2;
+        opacity: 1;
+      }
+
+      100% {
+        stroke-width: 8;
+        opacity: 0;
+      }
+    }
+
+    .node.active .pulse {
+      animation: pulse-ring 1.2s ease-out infinite;
+    }
+
+    @keyframes node-appear {
+      from {
+        opacity: 0;
+        transform: scale(0.4);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .node-enter {
+      animation: node-appear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .algo-panel {
+      display: none;
+    }
+
+    .algo-panel.active {
+      display: block;
+    }
+
+    /* Full tree reveal flash */
+    @keyframes reveal-flash {
+      0% {
+        background: #e8f0f8;
+      }
+
+      40% {
+        background: #d8e8ff;
+      }
+
+      100% {
+        background: #e8f0f8;
+      }
+    }
+
+    .canvas-area.revealed {
+      animation: reveal-flash 0.6s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo">D<span>&amp;</span>C Visualizer</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span style="font-size:0.68rem; color:#a0b8d0;">Design &amp; Analysis of Algorithms</span>
+      </div>
+    </header>
+
+    <!-- ALGO TABS -->
+    <div class="algo-tabs">
+      <button class="algo-tab active" onclick="switchAlgo('karatsuba')">Karatsuba Multiply</button>
+      <button class="algo-tab" onclick="switchAlgo('maxsub')">Max Subarray · D&amp;C</button>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- LEFT PANEL -->
+      <div class="left-panel">
+
+        <!-- KARATSUBA INPUTS -->
+        <div id="karatsuba-panel" class="algo-panel active">
+          <div class="panel-title">Parameters</div>
+          <div class="input-group">
+            <div class="input-label">Integer X</div>
+            <input type="text" id="kara-x" value="1234" placeholder="e.g. 1234567">
+            <div class="error-msg" id="kara-x-err">Enter a valid positive integer</div>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Integer Y</div>
+            <input type="text" id="kara-y" value="5678" placeholder="e.g. 8765432">
+            <div class="error-msg" id="kara-y-err">Enter a valid positive integer</div>
+          </div>
+        </div>
+
+        <!-- MAX SUBARRAY INPUTS -->
+        <div id="maxsub-panel" class="algo-panel">
+          <div class="panel-title">Parameters</div>
+          <div class="input-group">
+            <div class="input-label">Array (comma-separated)</div>
+            <input type="text" id="maxsub-arr" value="-2,1,-3,4,-1,2,1,-5,4" placeholder="e.g. -2,1,-3,4,-1">
+            <div class="error-msg" id="maxsub-arr-err">Enter comma-separated integers</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="runAlgorithm()">▶ Run Algorithm</button>
+        <button class="btn btn-reveal" id="btn-reveal-tree" onclick="revealFullTree()" disabled>⬛ Show Full Tree at
+          Once</button>
+        <button class="btn btn-secondary" onclick="resetAll()">↺ Reset</button>
+
+        <div class="panel-title">Step Control</div>
+        <div class="step-controls">
+          <button class="step-btn" id="btn-back" onclick="stepBack()" disabled>← Back</button>
+          <button class="step-btn" id="btn-next" onclick="stepNext()" disabled>Next →</button>
+        </div>
+        <div class="step-info">Step <span id="step-cur">0</span> / <span id="step-total">0</span></div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div class="panel-title">Current Step</div>
+        <div class="step-detail" id="step-detail">
+          <div class="step-type">—</div>
+          <div class="step-data">Run the algorithm to begin visualization.</div>
+        </div>
+
+      </div>
+
+      <!-- CANVAS -->
+      <div class="canvas-area" id="canvas-area">
+        <div class="canvas-label">Recursion Tree</div>
+        <div class="canvas-hint">scroll to zoom · drag to pan</div>
+        <div class="empty-state" id="empty-state">
+          <div class="big-text">D&amp;C</div>
+          <div class="small-text">Enter parameters and click Run</div>
+        </div>
+        <svg id="tree-svg">
+          <defs>
+            <marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="#7a90aa" />
+            </marker>
+          </defs>
+          <g id="tree-root"></g>
+        </svg>
+      </div>
+
+      <!-- RIGHT PANEL - Dashboard -->
+      <div class="right-panel">
+        <div class="panel-title">Complexity Dashboard</div>
+
+        <div class="metric">
+          <div class="metric-value" id="dash-depth">0</div>
+          <div class="metric-label">Recursion Depth</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="dash-ops">0</div>
+          <div class="metric-label">Operations</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="dash-nodes">0</div>
+          <div class="metric-label">Tree Nodes</div>
+        </div>
+
+        <div class="complexity-box" id="complexity-box">
+          <div class="complexity-formula" id="complexity-formula">—</div>
+          <div class="complexity-detail" id="complexity-detail">Select an algorithm and run to see complexity analysis.
+          </div>
+        </div>
+
+        <div class="panel-title">Legend</div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#dce8f8;border:1.5px solid #b0c8e8"></div>Pending call
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#bcd5ff;border:2px solid var(--accent)"></div>Active call
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#c8f0d8;border:1.5px solid var(--accent3)"></div>Completed
+          </div>
+          <div id="legend-extra"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // STATE
+    // ============================================================
+    let currentAlgo = 'karatsuba';
+    let steps = [];
+    let stepIndex = -1;
+    let treeData = null;
+    let svg, g, zoom;
+    let treeLayout;
+    let nodesDrawn = new Set();
+    let maxDepthSeen = 0;
+    let opCount = 0;
+
+    // ============================================================
+    // ALGO SWITCH
+    // ============================================================
+    function switchAlgo(algo) {
+      currentAlgo = algo;
+      document.querySelectorAll('.algo-tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && algo === 'karatsuba') || (i === 1 && algo === 'maxsub'));
+      });
+      document.querySelectorAll('.algo-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById(algo === 'karatsuba' ? 'karatsuba-panel' : 'maxsub-panel').classList.add('active');
+      resetAll();
+      updateComplexityBox();
+    }
+
+    function updateComplexityBox() {
+      const f = document.getElementById('complexity-formula');
+      const d = document.getElementById('complexity-detail');
+      const le = document.getElementById('legend-extra');
+      if (currentAlgo === 'karatsuba') {
+        f.textContent = 'O(n^1.585)';
+        d.innerHTML = 'Recurrence:<br>T(n) = 3T(n/2) + O(n)<br><br>Master Theorem Case 1:<br>O(n^log₂3) ≈ O(n^1.585)<br><br>vs naive O(n²) multiplication';
+        le.innerHTML = '';
+      } else {
+        f.textContent = 'O(n log n)';
+        d.innerHTML = 'Recurrence:<br>T(n) = 2T(n/2) + O(n)<br><br>Master Theorem Case 2:<br>O(n log n)<br><br>vs Kadane\'s O(n) DP';
+        le.innerHTML = `
+      <div class="legend-item"><div class="legend-dot" style="background:#c8f0d8;border:1.5px solid var(--accent3)"></div>Left wins</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fff3cc;border:1.5px solid var(--accent4)"></div>Right wins</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fde0e0;border:1.5px solid var(--accent2)"></div>Cross wins</div>`;
+      }
+    }
+
+    // ============================================================
+    // KARATSUBA ENGINE
+    // ============================================================
+    function karatsuba(x, y, depth, steps, parentId, nodeId) {
+      const id = nodeId || 0;
+      steps.push({ type: 'CALL', algo: 'karatsuba', x, y, depth, id, parentId });
+
+      if (x < 10 || y < 10) {
+        const result = x * y;
+        steps.push({ type: 'BASE', algo: 'karatsuba', x, y, result, depth, id });
+        return result;
+      }
+
+      const n = Math.max(String(x).length, String(y).length);
+      const m = Math.floor(n / 2);
+      const pow10m = Math.pow(10, m);
+
+      const xH = Math.floor(x / pow10m), xL = x % pow10m;
+      const yH = Math.floor(y / pow10m), yL = y % pow10m;
+
+      steps.push({ type: 'SPLIT', algo: 'karatsuba', x, y, xH, xL, yH, yL, m, depth, id });
+
+      const id0 = id * 10 + 1, id1 = id * 10 + 2, id2 = id * 10 + 3;
+      const z0 = karatsuba(xL, yL, depth + 1, steps, id, id0);
+      const z2 = karatsuba(xH, yH, depth + 1, steps, id, id2);
+      const z1 = karatsuba(xL + xH, yL + yH, depth + 1, steps, id, id1);
+
+      const middle = z1 - z2 - z0;
+      const result = z2 * Math.pow(10, 2 * m) + middle * pow10m + z0;
+      steps.push({ type: 'COMBINE', algo: 'karatsuba', z0, z1, z2, middle, m, result, depth, id });
+
+      return result;
+    }
+
+    // ============================================================
+    // MAX SUBARRAY ENGINE (D&C)
+    // ============================================================
+    function maxCrossSubarray(arr, low, mid, high) {
+      let leftSum = -Infinity, sum = 0;
+      for (let i = mid; i >= low; i--) { sum += arr[i]; if (sum > leftSum) leftSum = sum; }
+      let rightSum = -Infinity; sum = 0;
+      for (let i = mid + 1; i <= high; i++) { sum += arr[i]; if (sum > rightSum) rightSum = sum; }
+      return leftSum + rightSum;
+    }
+
+    function maxSubarrayDC(arr, low, high, depth, steps, parentId, nodeId) {
+      const id = nodeId === undefined ? 0 : nodeId;
+      const sub = arr.slice(low, high + 1);
+      steps.push({ type: 'CALL', algo: 'maxsub', arr: sub, low, high, depth, id, parentId });
+
+      if (low === high) {
+        steps.push({ type: 'BASE', algo: 'maxsub', val: arr[low], depth, id });
+        return arr[low];
+      }
+
+      const mid = Math.floor((low + high) / 2);
+      steps.push({ type: 'SPLIT', algo: 'maxsub', low, high, mid, depth, id });
+
+      const idL = id * 10 + 1, idR = id * 10 + 2;
+      const leftMax = maxSubarrayDC(arr, low, mid, depth + 1, steps, id, idL);
+      const rightMax = maxSubarrayDC(arr, mid + 1, high, depth + 1, steps, id, idR);
+      const crossMax = maxCrossSubarray(arr, low, mid, high);
+
+      let winner, result;
+      if (leftMax >= rightMax && leftMax >= crossMax) { winner = 'LEFT'; result = leftMax; }
+      else if (rightMax >= leftMax && rightMax >= crossMax) { winner = 'RIGHT'; result = rightMax; }
+      else { winner = 'CROSS'; result = crossMax; }
+
+      steps.push({ type: 'MERGE', algo: 'maxsub', leftMax, rightMax, crossMax, winner, result, depth, id });
+      return result;
+    }
+
+    // ============================================================
+    // RUN ALGORITHM
+    // ============================================================
+    function runAlgorithm() {
+      steps = [];
+
+      if (currentAlgo === 'karatsuba') {
+        const xv = document.getElementById('kara-x').value.trim();
+        const yv = document.getElementById('kara-y').value.trim();
+        const xErr = document.getElementById('kara-x-err');
+        const yErr = document.getElementById('kara-y-err');
+        let valid = true;
+        if (!/^\d+$/.test(xv) || xv.length > 15) { xErr.classList.add('show'); valid = false; } else xErr.classList.remove('show');
+        if (!/^\d+$/.test(yv) || yv.length > 15) { yErr.classList.add('show'); valid = false; } else yErr.classList.remove('show');
+        if (!valid) return;
+        karatsuba(parseInt(xv), parseInt(yv), 0, steps, null, 0);
+      } else {
+        const av = document.getElementById('maxsub-arr').value.trim();
+        const aErr = document.getElementById('maxsub-arr-err');
+        const parts = av.split(',').map(s => parseInt(s.trim()));
+        if (parts.some(isNaN) || parts.length < 2 || parts.length > 30) {
+          aErr.classList.add('show'); return;
+        }
+        aErr.classList.remove('show');
+        maxSubarrayDC(parts, 0, parts.length - 1, 0, steps, null, 0);
+      }
+
+      buildTreeFromSteps();
+      initSVG();
+      stepIndex = -1;
+      opCount = 0;
+      maxDepthSeen = 0;
+      updateDash();
+      updateStepControls();
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('step-total').textContent = steps.length;
+      document.getElementById('step-cur').textContent = 0;
+      document.getElementById('progress').style.width = '0%';
+      document.getElementById('step-detail').innerHTML = '<div class="step-type">READY</div><div class="step-data">Click <span class="hi">Next →</span> to step through, or use <span class="warn">Show Full Tree</span> to reveal all at once.</div>';
+
+      document.getElementById('btn-next').disabled = false;
+      document.getElementById('btn-back').disabled = true;
+      document.getElementById('btn-reveal-tree').disabled = false;
+    }
+
+    // ============================================================
+    // REVEAL FULL TREE AT ONCE
+    // ============================================================
+    function revealFullTree() {
+      if (!treeData || !treeData.nodeMap) return;
+
+      // Jump all steps
+      opCount = 0;
+      maxDepthSeen = 0;
+
+      // Reset all nodes first
+      for (const id in treeData.nodeMap) {
+        d3.select(`#node-${id}`).attr('class', 'node waiting').attr('opacity', 0);
+        d3.select(`#result-${id}`).text('');
+        d3.select(`#link-${id}`).attr('opacity', 0).attr('class', 'link');
+      }
+
+      // Apply all steps silently (no animation)
+      for (let i = 0; i < steps.length; i++) {
+        applyStep(steps[i], false);
+      }
+      stepIndex = steps.length - 1;
+      updateStepControls();
+
+      // Show final state for all nodes (all visible, done or colored)
+      for (const id in treeData.nodeMap) {
+        const nm = treeData.nodeMap[id];
+        const el = d3.select(`#node-${id}`);
+        // If never rendered active, show as done
+        if (el.attr('opacity') == 0) {
+          el.attr('opacity', 1).attr('class', 'node done');
+        }
+        d3.select(`#link-${id}`).attr('opacity', 0.5);
+      }
+
+      // Flash the canvas
+      const ca = document.getElementById('canvas-area');
+      ca.classList.remove('revealed');
+      void ca.offsetWidth;
+      ca.classList.add('revealed');
+
+      document.getElementById('step-detail').innerHTML = '<div class="step-type">FULL TREE REVEALED</div><div class="step-data">All <span class="hi">' + Object.keys(treeData.nodeMap).length + '</span> nodes shown. Use ← Back to step through the history.</div>';
+
+      // Disable reveal, update dash
+      document.getElementById('btn-reveal-tree').disabled = true;
+      updateDash();
+    }
+
+    // ============================================================
+    // BUILD TREE STRUCTURE FROM STEPS
+    // ============================================================
+    function buildTreeFromSteps() {
+      const nodeMap = {};
+      for (const s of steps) {
+        if (s.type === 'CALL') {
+          if (!nodeMap[s.id]) {
+            nodeMap[s.id] = {
+              id: s.id, parentId: s.parentId, depth: s.depth,
+              label: currentAlgo === 'karatsuba'
+                ? `k(${s.x},${s.y})`
+                : `[${s.arr.join(',')}]`,
+              state: 'waiting', result: null, winner: null, children: []
+            };
+          }
+        }
+        if (s.type === 'BASE' || s.type === 'COMBINE' || s.type === 'MERGE') {
+          if (nodeMap[s.id]) {
+            nodeMap[s.id].result = s.result !== undefined ? s.result : (s.val !== undefined ? s.val : null);
+            if (s.winner) nodeMap[s.id].winner = s.winner;
+          }
+        }
+      }
+
+      // Link parent-child
+      const roots = [];
+      for (const id in nodeMap) {
+        const n = nodeMap[id];
+        if (n.parentId === null || n.parentId === undefined) {
+          roots.push(n);
+        } else {
+          const p = nodeMap[n.parentId];
+          if (p) p.children.push(n);
+        }
+      }
+
+      treeData = { nodeMap, root: roots[0] || null };
+    }
+
+    // ============================================================
+    // INIT SVG & DRAW SKELETON
+    // ============================================================
+    function initSVG() {
+      const svgEl = document.getElementById('tree-svg');
+      d3.select(svgEl).selectAll('*').remove();
+      nodesDrawn.clear();
+
+      const defs = d3.select(svgEl).append('defs');
+      const filter = defs.append('filter').attr('id', 'glow').attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+      filter.append('feGaussianBlur').attr('in', 'SourceGraphic').attr('stdDeviation', '3').attr('result', 'blur');
+      const merge = filter.append('feMerge');
+      merge.append('feMergeNode').attr('in', 'blur');
+      merge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+      zoom = d3.zoom().scaleExtent([0.2, 3]).on('zoom', e => g.attr('transform', e.transform));
+      svg = d3.select(svgEl).call(zoom);
+      g = svg.append('g').attr('id', 'tree-root');
+
+      const W = svgEl.clientWidth || 800;
+      const H = svgEl.clientHeight || 600;
+
+      if (!treeData || !treeData.root) return;
+
+      treeLayout = d3.tree().nodeSize([90, 100]).separation((a, b) => a.parent === b.parent ? 1.2 : 1.6);
+
+      const hierarchy = d3.hierarchy(treeData.root, d => d.children.length > 0 ? d.children : null);
+      const laid = treeLayout(hierarchy);
+
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      laid.each(n => { if (n.x < minX) minX = n.x; if (n.x > maxX) maxX = n.x; if (n.y < minY) minY = n.y; if (n.y > maxY) maxY = n.y; });
+
+      const cx = (minX + maxX) / 2;
+      const offsetX = W / 2 - cx;
+      const offsetY = 60;
+
+      laid.each(n => {
+        if (treeData.nodeMap[n.data.id]) {
+          treeData.nodeMap[n.data.id].px = n.x + offsetX;
+          treeData.nodeMap[n.data.id].py = n.y + offsetY;
+        }
+      });
+
+      g.append('g').attr('class', 'links');
+      g.append('g').attr('class', 'nodes');
+
+      laid.links().forEach(link => {
+        const s = treeData.nodeMap[link.source.data.id];
+        const t = treeData.nodeMap[link.target.data.id];
+        if (!s || !t) return;
+        g.select('.links').append('path')
+          .attr('class', 'link')
+          .attr('id', `link-${link.target.data.id}`)
+          .attr('d', `M${s.px},${s.py} C${s.px},${(s.py + t.py) / 2} ${t.px},${(s.py + t.py) / 2} ${t.px},${t.py}`)
+          .attr('opacity', 0);
+      });
+
+      for (const id in treeData.nodeMap) {
+        const n = treeData.nodeMap[id];
+        const ng = g.select('.nodes').append('g')
+          .attr('class', 'node waiting')
+          .attr('id', `node-${id}`)
+          .attr('transform', `translate(${n.px},${n.py})`)
+          .attr('opacity', 0);
+        ng.append('circle').attr('r', 28);
+        ng.append('text').attr('class', 'label-text').attr('y', 42).attr('text-anchor', 'middle')
+          .text(truncateLabel(n.label));
+        ng.append('text').attr('class', 'result-text').attr('y', 8).attr('text-anchor', 'middle').attr('id', `result-${id}`).text('');
+        ng.append('text').attr('y', -4).attr('text-anchor', 'middle').attr('font-size', '9px').attr('fill', '#7a90aa').attr('id', `depth-${id}`).text(`d=${n.depth}`);
+      }
+    }
+
+    function truncateLabel(lbl) {
+      if (lbl.length > 14) return lbl.slice(0, 13) + '…';
+      return lbl;
+    }
+
+    // ============================================================
+    // STEP NAVIGATION
+    // ============================================================
+    function stepNext() {
+      if (stepIndex >= steps.length - 1) return;
+      stepIndex++;
+      applyStep(steps[stepIndex], true);
+      updateStepControls();
+    }
+
+    function stepBack() {
+      if (stepIndex < 0) return;
+      stepIndex--;
+      rebuildToStep(stepIndex);
+      updateStepControls();
+    }
+
+    function rebuildToStep(target) {
+      opCount = 0; maxDepthSeen = 0;
+      for (const id in treeData.nodeMap) {
+        d3.select(`#node-${id}`).attr('class', 'node waiting').attr('opacity', 0);
+        d3.select(`#result-${id}`).text('');
+        d3.select(`#link-${id}`).attr('opacity', 0).attr('class', 'link');
+      }
+      for (let i = 0; i <= target; i++) applyStep(steps[i], false);
+    }
+
+    function applyStep(step, animate) {
+      if (!step) return;
+      opCount++;
+      if (step.depth > maxDepthSeen) maxDepthSeen = step.depth;
+
+      d3.selectAll('.node.active').attr('class', 'node done').select('circle');
+
+      const nId = `node-${step.id}`;
+      const nodeEl = d3.select(`#${nId}`);
+
+      if (step.type === 'CALL') {
+        d3.select(`#link-${step.id}`).attr('opacity', 0.4).attr('class', 'link active');
+        nodeEl.attr('opacity', 1).attr('class', 'node active');
+      }
+
+      if (step.type === 'BASE') {
+        nodeEl.attr('class', 'node done');
+        d3.select(`#result-${step.id}`).text(step.result !== undefined ? step.result : step.val);
+      }
+
+      if (step.type === 'COMBINE' || step.type === 'MERGE') {
+        let cls = 'node done';
+        if (step.winner === 'LEFT') cls = 'node left-win';
+        else if (step.winner === 'RIGHT') cls = 'node right-win';
+        else if (step.winner === 'CROSS') cls = 'node cross-win';
+        nodeEl.attr('class', cls);
+        d3.select(`#result-${step.id}`).text(step.result !== undefined ? step.result : '');
+        if (treeData.nodeMap[step.id]) {
+          treeData.nodeMap[step.id].children.forEach(ch => {
+            d3.select(`#link-${ch.id}`).attr('opacity', 0.6);
+          });
+        }
+      }
+
+      updateDash();
+      if (animate) renderStepDetail(step);
+    }
+
+    function renderStepDetail(step) {
+      const box = document.getElementById('step-detail');
+      let html = '';
+
+      if (step.algo === 'karatsuba') {
+        if (step.type === 'CALL') html = `<div class="step-type">RECURSIVE CALL · depth ${step.depth}</div><div class="step-data">karatsuba(<span class="hi">${step.x}</span>, <span class="hi">${step.y}</span>)</div>`;
+        else if (step.type === 'BASE') html = `<div class="step-type">BASE CASE · depth ${step.depth}</div><div class="step-data">${step.x} × ${step.y} = <span class="hi">${step.result}</span></div>`;
+        else if (step.type === 'SPLIT') html = `<div class="step-type">SPLIT · depth ${step.depth}</div><div class="step-data">xH=<span class="warn">${step.xH}</span> xL=<span class="warn">${step.xL}</span><br>yH=<span class="warn">${step.yH}</span> yL=<span class="warn">${step.yL}</span><br>m = ${step.m}</div>`;
+        else if (step.type === 'COMBINE') html = `<div class="step-type">COMBINE · depth ${step.depth}</div><div class="step-data">z0=<span class="warn">${step.z0}</span>, z2=<span class="warn">${step.z2}</span><br>z1=<span class="warn">${step.z1}</span><br>middle=z1-z0-z2=<span class="warn">${step.middle}</span><br>result = <span class="hi">${step.result}</span></div>`;
+      } else {
+        if (step.type === 'CALL') html = `<div class="step-type">RECURSIVE CALL · depth ${step.depth}</div><div class="step-data">arr = [<span class="hi">${step.arr ? step.arr.join(', ') : ''}</span>]</div>`;
+        else if (step.type === 'BASE') html = `<div class="step-type">BASE CASE · depth ${step.depth}</div><div class="step-data">Single element: <span class="hi">${step.val}</span></div>`;
+        else if (step.type === 'SPLIT') html = `<div class="step-type">DIVIDE · depth ${step.depth}</div><div class="step-data">range [${step.low}..${step.high}]<br>mid = <span class="warn">${step.mid}</span></div>`;
+        else if (step.type === 'MERGE') {
+          const wc = step.winner === 'LEFT' ? 'hi' : step.winner === 'RIGHT' ? 'warn' : 'err';
+          html = `<div class="step-type">MERGE · depth ${step.depth}</div><div class="step-data">Left: <span class="hi">${step.leftMax}</span><br>Right: <span class="warn">${step.rightMax}</span><br>Cross: <span class="err">${step.crossMax}</span><br>Winner: <span class="${wc}">${step.winner}</span> → <span class="hi">${step.result}</span></div>`;
+        }
+      }
+
+      box.innerHTML = html;
+    }
+
+    function updateStepControls() {
+      document.getElementById('btn-back').disabled = stepIndex <= 0;
+      document.getElementById('btn-next').disabled = stepIndex >= steps.length - 1;
+      const cur = stepIndex + 1;
+      document.getElementById('step-cur').textContent = cur;
+      const pct = steps.length > 0 ? (cur / steps.length) * 100 : 0;
+      document.getElementById('progress').style.width = pct + '%';
+    }
+
+    function updateDash() {
+      document.getElementById('dash-depth').textContent = maxDepthSeen;
+      document.getElementById('dash-ops').textContent = opCount;
+      document.getElementById('dash-nodes').textContent = treeData ? Object.keys(treeData.nodeMap).length : 0;
+    }
+
+    function resetAll() {
+      steps = []; stepIndex = -1; treeData = null; opCount = 0; maxDepthSeen = 0;
+      const svgEl = document.getElementById('tree-svg');
+      d3.select(svgEl).selectAll('*').remove();
+      document.getElementById('empty-state').style.display = 'flex';
+      document.getElementById('btn-back').disabled = true;
+      document.getElementById('btn-next').disabled = true;
+      document.getElementById('btn-reveal-tree').disabled = true;
+      document.getElementById('step-cur').textContent = 0;
+      document.getElementById('step-total').textContent = 0;
+      document.getElementById('progress').style.width = '0%';
+      document.getElementById('step-detail').innerHTML = '<div class="step-type">—</div><div class="step-data">Run the algorithm to begin visualization.</div>';
+      document.getElementById('dash-depth').textContent = 0;
+      document.getElementById('dash-ops').textContent = 0;
+      document.getElementById('dash-nodes').textContent = 0;
+      document.getElementById('canvas-area').classList.remove('revealed');
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    updateComplexityBox();
+  </script>
+</body>
+
+</html>
